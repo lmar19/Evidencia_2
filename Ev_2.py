@@ -81,3 +81,98 @@ def registrar_nota():
     df.to_csv(archivo_csv, index=False)
     print("Nota registrada con éxito.")
 
+# Función para consultar por período
+def consultar_por_periodo():
+    fecha_inicial = input("Ingrese la fecha inicial (YYYY-MM-DD, o presione Enter para utilizar la fecha predeterminada '2000-01-01'): ")
+    fecha_final = input("Ingrese la fecha final (YYYY-MM-DD, o presione Enter para utilizar la fecha actual): ")
+
+    # Establecer las fechas predeterminadas si el usuario las omite
+    if fecha_inicial == "":
+        fecha_inicial = datetime(2000, 1, 1)
+        print("Fecha inicial predeterminada: 2000-01-01")
+    else:
+        fecha_inicial = datetime.strptime(fecha_inicial, "%Y-%m-%d")
+
+    if fecha_final == "":
+        fecha_final = datetime.now()
+        print(f"Fecha final predeterminada: {fecha_final.strftime('%Y-%m-%d')}")
+    else:
+        fecha_final = datetime.strptime(fecha_final, "%Y-%m-%d")
+
+    # Validar las fechas
+    if fecha_final < fecha_inicial:
+        print("La fecha final debe ser igual o posterior a la fecha inicial.")
+        return
+
+    notas_periodo = df[(df["Fecha"] >= fecha_inicial) & (df["Fecha"] <= fecha_final)]
+
+    if notas_periodo.empty:
+        print("No hay notas emitidas para el período especificado.")
+    else:
+        promedio_monto = notas_periodo["Monto"].mean()
+        print("Notas del período:")
+        print(notas_periodo[["Folio", "Fecha", "Cliente"]])
+        print(f"Monto promedio de notas del período: ${round(promedio_monto, 2)}")
+
+# Función para consultar por folio
+def consultar_por_folio():
+    folio_consulta = input("Ingrese el folio de la nota a consultar: ")
+    folio_consulta = int(folio_consulta)
+
+    nota = df[df["Folio"] == folio_consulta]
+
+    if nota.empty:
+        print("La nota no existe o está cancelada.")
+    else:
+        print("Datos de la nota:")
+        print(nota[["Folio", "Fecha", "Cliente", "RFC", "Correo", "Monto"]])
+        print("Detalle de la nota:")
+        print(nota["Detalle"].iloc[0])
+
+# Función para consultar por cliente
+def consultar_por_cliente():
+    rfc_clientes = df["RFC"].unique()
+    rfc_clientes.sort()
+
+    for i, rfc in enumerate(rfc_clientes, start=1):
+        print(f"{i}. RFC: {rfc}")
+
+    seleccion = int(input("Seleccione el número del cliente a consultar: "))
+
+    if seleccion < 1 or seleccion > len(rfc_clientes):
+        print("Selección no válida.")
+        return
+
+    rfc_seleccionado = rfc_clientes[seleccion - 1]
+
+    notas_cliente = df[df["RFC"] == rfc_seleccionado]
+
+    if notas_cliente.empty:
+        print("No hay notas emitidas para este cliente.")
+    else:
+        promedio_monto = notas_cliente["Monto"].mean()
+        print("Notas del cliente:")
+        print(notas_cliente[["Folio", "Fecha", "Cliente"]])
+        print(f"Monto promedio de notas del cliente: ${round(promedio_monto, 2)}")
+
+        exportar_excel = input("¿Desea exportar esta información a un archivo de Excel? (S/N): ")
+
+        if exportar_excel.lower() == "s":
+            exportar_a_excel(notas_cliente, rfc_seleccionado)
+
+# Función para exportar notas de un cliente a un archivo Excel
+def exportar_a_excel(notas_cliente, rfc):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Notas de Cliente"
+
+    # Encabezados
+    ws.append(["Folio", "Fecha", "Cliente", "Monto"])
+    for _, row in notas_cliente.iterrows():
+        ws.append([row["Folio"], row["Fecha"].strftime("%Y-%m-%d"), row["Cliente"], row["Monto"]])
+
+    # Guardar el archivo Excel
+    fecha_emision = datetime.now().strftime("%Y-%m-%d")
+    archivo_excel = f"{rfc}_{fecha_emision}.xlsx"
+    wb.save(archivo_excel)
+    print(f"Archivo Excel guardado como '{archivo_excel}'.")
