@@ -176,3 +176,27 @@ def exportar_a_excel(notas_cliente, rfc):
     archivo_excel = f"{rfc}_{fecha_emision}.xlsx"
     wb.save(archivo_excel)
     print(f"Archivo Excel guardado como '{archivo_excel}'.")
+    # Función para cancelar una nota
+def cancelar_nota():
+    folio_cancelar = input("Ingrese el folio de la nota a cancelar: ")
+    folio_cancelar = int(folio_cancelar)
+
+    nota = df[df["Folio"] == folio_cancelar]
+
+    if nota.empty:
+        print("La nota no existe o ya está cancelada.")
+    else:
+        print("Datos de la nota a cancelar:")
+        print(nota[["Folio", "Fecha", "Cliente", "RFC", "Correo", "Monto"]])
+        print("Detalle de la nota:")
+        print(nota["Detalle"].iloc[0])
+
+        confirmar = input("¿Está seguro de que desea cancelar esta nota? (S/N): ")
+
+        if confirmar.lower() == "s":
+            # Marcar la nota como cancelada
+            df.loc[df["Folio"] == folio_cancelar, "Fecha"] = None
+            df.to_csv(archivo_csv, index=False)
+            print("Nota cancelada con éxito.")
+        else:
+            print("Operación de cancelación cancelada.")
