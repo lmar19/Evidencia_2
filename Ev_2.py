@@ -200,3 +200,82 @@ def cancelar_nota():
             print("Nota cancelada con éxito.")
         else:
             print("Operación de cancelación cancelada.")
+# Función para recuperar una nota
+def recuperar_nota():
+    notas_canceladas = df[df["Fecha"].isna()]
+
+    if notas_canceladas.empty:
+        print("No hay notas canceladas para recuperar.")
+    else:
+        print("Notas canceladas:")
+        print(notas_canceladas[["Folio", "Cliente"]])
+
+        folio_recuperar = input("Ingrese el folio de la nota a recuperar o '0' para cancelar: ")
+        folio_recuperar = int(folio_recuperar)
+
+        if folio_recuperar == 0:
+            print("Operación de recuperación cancelada.")
+        else:
+            nota = notas_canceladas[notas_canceladas["Folio"] == folio_recuperar]
+
+            if nota.empty:
+                print("La nota no existe o no está cancelada.")
+            else:
+                print("Datos de la nota a recuperar:")
+                print(nota[["Folio", "Fecha", "Cliente", "RFC", "Correo", "Monto"]])
+                print("Detalle de la nota:")
+                print(nota["Detalle"].iloc[0])
+
+                confirmar = input("¿Está seguro de que desea recuperar esta nota? (S/N): ")
+
+                if confirmar.lower() == "s":
+                    # Restaurar la fecha de la nota (recuperarla)
+                    df.loc[df["Folio"] == folio_recuperar, "Fecha"] = datetime.now()
+                    df.to_csv(archivo_csv, index=False)
+                    print("Nota recuperada con éxito.")
+                else:
+                    print("Operación de recuperación cancelada.")
+
+# Menú principal
+while True:
+    print("\n===== Menú Principal =====")
+    print("1. Registrar una nota")
+    print("2. Consultas y reportes")
+    print("3. Cancelar una nota")
+    print("4. Recuperar una nota")
+    print("5. Salir")
+
+    opcion_menu = input("Seleccione una opción (1/2/3/4/5): ")
+
+    if opcion_menu == "1":
+        registrar_nota()
+    elif opcion_menu == "2":
+        while True:
+            print("\n===== Consultas y Reportes =====")
+            print("1. Consulta por período")
+            print("2. Consulta por folio")
+            print("3. Consulta por cliente")
+            print("4. Volver al menú principal")
+
+            opcion_consulta = input("Seleccione una opción (1/2/3/4): ")
+
+            if opcion_consulta == "1":
+                consultar_por_periodo()
+            elif opcion_consulta == "2":
+                consultar_por_folio()
+            elif opcion_consulta == "3":
+                consultar_por_cliente()
+            elif opcion_consulta == "4":
+                break
+            else:
+                print("Opción no válida.")
+    elif opcion_menu == "3":
+        cancelar_nota()
+    elif opcion_menu == "4":
+        recuperar_nota()
+    elif opcion_menu == "5":
+        confirmar_salida = input("¿Está seguro de que desea salir? (S/N): ")
+        if confirmar_salida.lower() == "s":
+            break
+    else:
+        print("Opción no válida.")
